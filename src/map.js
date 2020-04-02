@@ -2,13 +2,45 @@ import React from 'react';
 import GoogleMapReact from 'google-map-react';
 import ReactDOM from 'react-dom';
 
-function Map() {
-  const props = {
-    center: {
-      lat: 59.95,
-      lng: 30.33,
-    },
-    zoom: 11
+export const Map = (props) => {
+
+  const handleClick = (map, maps) => {
+    const location = window.navigator && window.navigator.geolocation
+    location.getCurrentPosition(position => {
+      const pos = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      }
+      createMarker(map, maps, pos);
+    })
+  }
+
+  const createMarker = (map, maps, location) => {
+    const infoWindow = new maps.InfoWindow();
+    const geocode = new maps.Geocoder();
+    geocode.geocode({ location }, function (results, status) {
+      if (status === 'OK') {
+        const marker = new maps.Marker({ position: location, map, title: 'Click Me!' })
+        maps.event.addListener(marker, 'click', function () {
+          infoWindow.setPosition(location);
+          infoWindow.setContent(results[0].formatted_address);
+          infoWindow.open(map);
+        });
+        map.setCenter(location);
+      }
+    })
+  }
+
+  const handleOnLoad = (map, maps) => {
+    const controlButtonDiv = document.createElement('div');
+    ReactDOM.render(
+      <button
+        className="btn btn-success"
+        onClick={() => handleClick(map, maps)}>
+        Find Me!
+      </button>,
+      controlButtonDiv);
+    map.controls[maps.ControlPosition.TOP_CENTER].push(controlButtonDiv);
   };
 
   const style = { height: '100vh', width: '100%' }
@@ -27,43 +59,10 @@ function Map() {
   );
 }
 
-function handleClick(map, maps) {
-  const location = window.navigator && window.navigator.geolocation
-  location.getCurrentPosition(position => {
-    const pos = {
-      lat: position.coords.latitude,
-      lng: position.coords.longitude
-    }
-    createMarker(map, maps, pos);
-  })
-}
-
-function createMarker(map, maps, location) {
-  const infoWindow = new maps.InfoWindow();
-  const geocode = new maps.Geocoder();
-  geocode.geocode({ location }, function (results, status) {
-    if (status === 'OK') {
-      const marker = new maps.Marker({ position: location, map, title: 'Click Me!' })
-      maps.event.addListener(marker, 'click', function () {
-        infoWindow.setPosition(location);
-        infoWindow.setContent(results[0].formatted_address);
-        infoWindow.open(map);
-      });
-      map.setCenter(location);
-    }
-  })
-}
-
-function handleOnLoad(map, maps) {
-  const controlButtonDiv = document.createElement('div');
-  ReactDOM.render(
-    <button
-      className="btn btn-success"
-      onClick={() => handleClick(map, maps)}>
-      Find Me!
-    </button>,
-    controlButtonDiv);
-  map.controls[maps.ControlPosition.TOP_CENTER].push(controlButtonDiv);
+Map.defaultProps = {
+  center: {
+    lat: 59.95,
+    lng: 30.33,
+  },
+  zoom: 11
 };
-
-export default Map;
